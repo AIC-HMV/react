@@ -1,5 +1,55 @@
-# [React](https://react.dev/) &middot; [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/facebook/react/blob/main/LICENSE) [![npm version](https://img.shields.io/npm/v/react.svg?style=flat)](https://www.npmjs.com/package/react) [![(Runtime) Build and Test](https://github.com/facebook/react/actions/workflows/runtime_build_and_test.yml/badge.svg)](https://github.com/facebook/react/actions/workflows/runtime_build_and_test.yml) [![(Compiler) TypeScript](https://github.com/facebook/react/actions/workflows/compiler_typescript.yml/badge.svg?branch=main)](https://github.com/facebook/react/actions/workflows/compiler_typescript.yml) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://legacy.reactjs.org/docs/how-to-contribute.html#your-first-pull-request)
+[![AI-Core7.Quantum](https://img.shields.io/badge/AI--Core7.Quantum™-ENFORCED-black?style=for-the-badge&logo=vercel)]
 
+import qrcode
+from PIL import Image
+
+# Facebook profile link
+fb_url = "https://www.facebook.com/Austinvo9999?mibextid=wwXIfr"
+
+# Generate QR code with color customization (blue foreground, gold background)
+qr = qrcode.QRCode(
+    version=1,
+    error_correction=qrcode.constants.ERROR_CORRECT_H,
+    box_size=10,
+    border=4,
+)
+qr.add_data(fb_url)
+qr.make(fit=True)
+
+# Create image with custom colors
+img = qr.make_image(fill_color="#007bff", back_color="#FFD700")  # Blue and Gold
+
+# Save image
+file_path = "/mnt/data/facebook_austinvo9999_blue_gold_qr.png"
+img.save(file_path)
+
+file_path
+
+<br />
+🔐 **Patched by [AIC-HMV](https://github.com/AIC-HMV) • Hung Minh Vo – Creator of AI-Core7.Quantum**  
+🧠 “No one deletes, no one sees.”  
+🌐 Sovereign code. Supreme security. Global impact.  
+📧 Contact: [hmvprime.ai@gmail.com]
+                     
+# [React](https://react.dev/) · [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/facebook/react/blob/main/LICENSE) [![npm version](https://img.shields.io/npm/v/react.svg?style=flat)](https://www.npmjs.com/package/react) [![(Runtime) Build and Test](https://github.com/facebook/react/actions/workflows/runtime_build_and_test.yml/badge.svg)](https://github.com/facebook/react/actions/workflows/runtime_build_and_test.yml) [![(Compiler) TypeScript](https://github.com/facebook/react/actions/workflows/compiler_typescript.yml/badge.svg?branch=main)](https://github.com/facebook/react/actions/workflows/compiler_typescript.yml) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://legacy.reactjs.org/docs/how-to-contribute.html#your-first-pull-request)
+
+---
+
+### 🥇 Dev/Prod Compatibility Patch for React 19 — AIC-HMV Gold Standard
+
+[![AIC-HMV Patch](https://img.shields.io/badge/AIC--HMV-GOLD--PATCH-brightgold?style=for-the-badge&logo=react)](https://github.com/AIC-HMV)  
+[![Tracked Bug: #32030](https://img.shields.io/badge/React%2019%20Bug-%2332030-blue?style=for-the-badge)](https://github.com/facebook/react/issues/32030)
+
+> 🔧 Fix contributed by [**AIC-HMV**](https://github.com/AIC-HMV) (Hung Minh Vo)  
+> 🛠 Resolves React 19’s dev/prod singleton conflict ([#32030](https://github.com/facebook/react/issues/32030))  
+> 📦 Used in: Rspack, pnpm, Single-SPA federation apps
+
+✅ **Recommended patch (temporary workaround):**
+```js
+shared: {
+  react: { singleton: false },
+  'react-dom': { singleton: false },
+}
 React is a JavaScript library for building user interfaces.
 
 * **Declarative:** React makes it painless to create interactive UIs. Design simple views for each state in your application, and React will efficiently update and render just the right components when your data changes. Declarative views make your code more predictable, simpler to understand, and easier to debug.
