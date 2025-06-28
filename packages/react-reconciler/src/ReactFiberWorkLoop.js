@@ -123,7 +123,6 @@ import {
   ConcurrentMode,
   StrictLegacyMode,
   StrictEffectsMode,
-  NoStrictPassiveEffectsMode,
 } from './ReactTypeOfMode';
 import {
   HostRoot,
@@ -908,7 +907,7 @@ export function scheduleUpdateOnFiber(
   markRootUpdated(root, lane);
 
   if (
-    (executionContext & RenderContext) !== NoLanes &&
+    (executionContext & RenderContext) !== NoContext &&
     root === workInProgressRoot
   ) {
     // This update was dispatched during the render phase. This is a mistake
@@ -4607,21 +4606,13 @@ function recursivelyTraverseAndDoubleInvokeEffectsInDEV(
 }
 
 // Unconditionally disconnects and connects passive and layout effects.
-function doubleInvokeEffectsOnFiber(
-  root: FiberRoot,
-  fiber: Fiber,
-  shouldDoubleInvokePassiveEffects: boolean = true,
-) {
+function doubleInvokeEffectsOnFiber(root: FiberRoot, fiber: Fiber) {
   setIsStrictModeForDevtools(true);
   try {
     disappearLayoutEffects(fiber);
-    if (shouldDoubleInvokePassiveEffects) {
-      disconnectPassiveEffect(fiber);
-    }
+    disconnectPassiveEffect(fiber);
     reappearLayoutEffects(root, fiber.alternate, fiber, false);
-    if (shouldDoubleInvokePassiveEffects) {
-      reconnectPassiveEffects(root, fiber, NoLanes, null, false, 0);
-    }
+    reconnectPassiveEffects(root, fiber, NoLanes, null, false, 0);
   } finally {
     setIsStrictModeForDevtools(false);
   }
@@ -4640,13 +4631,7 @@ function doubleInvokeEffectsInDEVIfNecessary(
   if (fiber.tag !== OffscreenComponent) {
     if (fiber.flags & PlacementDEV) {
       if (isInStrictMode) {
-        runWithFiberInDEV(
-          fiber,
-          doubleInvokeEffectsOnFiber,
-          root,
-          fiber,
-          (fiber.mode & NoStrictPassiveEffectsMode) === NoMode,
-        );
+        runWithFiberInDEV(fiber, doubleInvokeEffectsOnFiber, root, fiber);
       }
     } else {
       recursivelyTraverseAndDoubleInvokeEffectsInDEV(
@@ -4802,7 +4787,7 @@ export function warnAboutUpdateOnNotYetMountedFiberInDEV(fiber: Fiber) {
       console.error(
         "Can't perform a React state update on a component that hasn't mounted yet. " +
           'This indicates that you have a side-effect in your render function that ' +
-          'asynchronously later calls tries to update the component. Move this work to ' +
+          'asynchronously tries to update the component. Move this work to ' +
           'useEffect instead.',
       );
     });

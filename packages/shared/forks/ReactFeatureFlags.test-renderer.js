@@ -49,7 +49,6 @@ export const enableLegacyHidden = false;
 
 export const enableTransitionTracing = false;
 
-export const enableDO_NOT_USE_disableStrictPassiveEffect = false;
 export const enableFizzExternalRuntime = true;
 
 export const alwaysThrottleRetries = true;
@@ -61,15 +60,13 @@ export const disableClientCache = true;
 export const enableInfiniteRenderLoopDetection = false;
 
 export const renameElementSymbol = true;
-export const enableShallowPropDiffing = false;
-export const enableEagerAlternateStateNodeCleanup = false;
+export const enableEagerAlternateStateNodeCleanup = true;
 
 export const enableYieldingBeforePassive = true;
 
 export const enableThrottledScheduling = false;
 export const enableViewTransition = false;
 export const enableGestureTransition = false;
-export const enableFastAddPropertiesInDiffing = true;
 export const enableLazyPublicInstanceInFabric = false;
 export const enableScrollEndPolyfill = true;
 export const enableSuspenseyImages = false;
@@ -91,7 +88,6 @@ export const enableFragmentRefs = false;
 export const disableLegacyMode = true;
 export const disableLegacyContext = true;
 export const disableLegacyContextForFunctionComponents = true;
-export const enableRenderableContext = true;
 export const enableReactTestRendererWarning = true;
 export const disableDefaultPropsExceptForClasses = true;
 
