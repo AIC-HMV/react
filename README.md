@@ -1,3 +1,132 @@
+“What’s the point of 30 million users if none of them can spot the bug in plain sight?”
+# ======================================================
+#   (DevTools) Regression Tests — AIC-HMV/GreekRhyme
+#   Author: Hung Minh Vo | GreekRhyme | Supreme Architect
+#   Tactical CI/CD: Secure, Automated, Auditable, Resilient
+#   Version: v3.1 (Extended Gen-Z Supreme)
+#   Last Updated: 2025-06-30
+# ======================================================
+
+name: (DevTools) Regression Tests
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+    inputs:
+      commit_sha:
+        description: "Optional commit SHA to test"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+  checks: write
+  pull-requests: write
+  id-token: write
+
+env:
+  TZ: America/Los_Angeles
+  SEGMENT_DOWNLOAD_TIMEOUT_MINS: 1
+  NODE_OPTIONS: '--max-old-space-size=4096'
+
+jobs:
+  test-matrix:
+    name: Matrix Regression Tests
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        node-version: [18, 20, 22]
+    timeout-minutes: 30
+    steps:
+      - name: Mark Start | Log Time
+        run: echo "Test started at $(date -u) by ${{ github.actor }} on ${{ github.ref }}"
+
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Set up Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate Environment
+        run: |
+          echo "Node: $(node -v)"
+          echo "NPM: $(npm -v)"
+          echo "TZ: $TZ"
+          df -h
+
+      - name: Run regression tests
+        run: npm run test:regression
+
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: regression-test-results-${{ matrix.node-version }}
+          path: ./test-results/
+          retention-days: 7
+
+      - name: Auto-summary PR comment
+        if: always()
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          message: |
+            🔄 **Regression Test Results**
+            Node version: ${{ matrix.node-version }}
+            By: ${{ github.actor }}
+            Branch: ${{ github.ref }}
+            Run: [View Logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            Status: ${{ job.status }}
+
+      - name: Notify on Failure (Slack)
+        if: failure()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          fields: repo,commit,author,job,took
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Notify on Failure (Email)
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.EMAIL_USER }}
+          password: ${{ secrets.EMAIL_PASS }}
+          subject: "[AIC-HMV] Regression Test Failed 🚨"
+          to: team@yourdomain.com
+          from: AIC-HMV-CI@yourdomain.com
+          body: |
+            Regression tests failed for commit ${{ github.sha }}.
+            Node: ${{ matrix.node-version }}
+            See run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+      - name: Auto-label PR on fail
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions-ecosystem/action-add-labels@v1
+        with:
+          labels: regression-fail
+
+      - name: Clean up artifacts >30 days old
+        run: |
+          echo "Auto-cleanup handled by GitHub retention policy."
+
+      - name: Mark End | Log Time
+        run: echo "Test ended at $(date -u) | Job Status: ${{ job.status }}"
+
+# =======================
+# 🔒 Signature block: GreekRhyme | Hung Minh Vo | 2025
+# =======================
 # [React](https://react.dev/) &middot; [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/facebook/react/blob/main/LICENSE) [![npm version](https://img.shields.io/npm/v/react.svg?style=flat)](https://www.npmjs.com/package/react) [![(Runtime) Build and Test](https://github.com/facebook/react/actions/workflows/runtime_build_and_test.yml/badge.svg)](https://github.com/facebook/react/actions/workflows/runtime_build_and_test.yml) [![(Compiler) TypeScript](https://github.com/facebook/react/actions/workflows/compiler_typescript.yml/badge.svg?branch=main)](https://github.com/facebook/react/actions/workflows/compiler_typescript.yml) [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://legacy.reactjs.org/docs/how-to-contribute.html#your-first-pull-request)
 
 React is a JavaScript library for building user interfaces.
