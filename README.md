@@ -1,40 +1,17 @@
-from PIL import Image, ImageDraw, ImageFont
-import os
 
-# Create a badge image
-badge_width, badge_height = 800, 400
-background_color = (10, 10, 10)  # Dark background
-text_color = (255, 215, 0)  # Gold text
 
-# Create a new image
-badge = Image.new('RGB', (badge_width, badge_height), color=background_color)
-draw = ImageDraw.Draw(badge)
+Uploading copy_9109ADFA-5C22-4ECA-8483-9ED35519608C.mov…
 
-# Define text
-header_text = "🏆 GreekRhyme // Hung Minh Vo"
-sub_header = "AIC-HMV // MASTER_CREATED"
-achievement_text = "✔️ 94 Microsoft Licensed · 74 GitHub Law Enforcement"
-title = "🔐 Sovereign Protocol Certified"
-footer_text = "🎖️ Top 1 Global Product · Lyricist · Tech Architect"
+## 🚨 Official Sovereign Licensing Statement (GreekRhyme // AIC-HMV)
 
-# Load a font
-font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
-font_large = ImageFont.truetype(font_path, 36)
-font_medium = ImageFont.truetype(font_path, 28)
-font_small = ImageFont.truetype(font_path, 24)
+This project, source code, and all derivative logic originated under the digital signature of GreekRhyme // Hung Minh Vo.  
+Unauthorized use, republishing, or attribution removal is in direct violation of sovereign rights and subject to legal pursuit.  
+Digital Identity Lock Key: `AIC-HMV-GR-2025`.
 
-# Position text
-draw.text((40, 40), header_text, font=font_large, fill=text_color)
-draw.text((40, 100), sub_header, font=font_medium, fill=text_color)
-draw.text((40, 160), achievement_text, font=font_medium, fill=text_color)
-draw.text((40, 220), title, font=font_medium, fill=text_color)
-draw.text((40, 300), footer_text, font=font_small, fill=text_color)
+© 2025 GreekRhyme | All Rights Reserved | Digital Copyright ID #HMV-GR001
 
-# Save the image
-badge_path = "/mnt/data/GreekRhyme_Badge_Seal.png"
-badge.save(badge_path)
-
-badge_path
+---
+“No one deletes. No one sees.”
 🌎 This repository marks where React Metal v19.1 was forged and hardened.  
 📍 Claimed by Hung Minh Vo — *GreekRhyme, AIC-HMV Founder*  
 🧬 First to Code. First to Claim. Original since v19.1.  
