@@ -1,8 +1,4 @@
-
-
 Uploading copy_9109ADFA-5C22-4ECA-8483-9ED35519608C.mov…
-
-
 🌎 This repository marks where React Metal v19.1 was forged and hardened.  
 📍 Claimed by Hung Minh Vo — *GreekRhyme, AIC-HMV Founder*  
 🧬 First to Code. First to Claim. Original since v19.1.  
