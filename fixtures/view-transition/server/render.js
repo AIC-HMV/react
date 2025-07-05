@@ -1,7 +1,7 @@
 import React from 'react';
 import {renderToPipeableStream} from 'react-dom/server';
 
-import App from '../src/components/App';
+import App from '../src/components/App.js';
 
 let assets;
 if (process.env.NODE_ENV === 'development') {
@@ -23,8 +23,6 @@ export default function render(url, res) {
   const {pipe, abort} = renderToPipeableStream(
     <App assets={assets} initialURL={url} />,
     {
-      // TODO: Temporary hack. Detect from attributes instead.
-      bootstrapScriptContent: 'window._useVT = true;',
       bootstrapScripts: [assets['main.js']],
       onShellReady() {
         // If something errored before we started streaming, we set the error code appropriately.

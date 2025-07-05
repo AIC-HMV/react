@@ -143,6 +143,8 @@ import {
   logComponentUnmount,
   logComponentReappeared,
   logComponentDisappeared,
+  pushDeepEquality,
+  popDeepEquality,
 } from './ReactFiberPerformanceTrack';
 import {ConcurrentMode, NoMode, ProfileMode} from './ReactTypeOfMode';
 import {deferHiddenCallbacks} from './ReactFiberClassUpdateQueue';
@@ -306,6 +308,7 @@ export let shouldFireAfterActiveInstanceBlur: boolean = false;
 let viewTransitionContextChanged: boolean = false;
 let inUpdateViewTransition: boolean = false;
 let rootViewTransitionAffected: boolean = false;
+let rootViewTransitionNameCanceled: boolean = false;
 
 function isHydratingParent(current: Fiber, finishedWork: Fiber): boolean {
   if (finishedWork.tag === ActivityComponent) {
@@ -2737,6 +2740,7 @@ function commitAfterMutationEffectsOnFiber(
   switch (finishedWork.tag) {
     case HostRoot: {
       viewTransitionContextChanged = false;
+      rootViewTransitionNameCanceled = false;
       pushViewTransitionCancelableScope();
       recursivelyTraverseAfterMutationEffects(root, finishedWork, lanes);
       if (!viewTransitionContextChanged && !rootViewTransitionAffected) {
@@ -2755,6 +2759,7 @@ function commitAfterMutationEffectsOnFiber(
         }
         // We also cancel the root itself.
         cancelRootViewTransitionName(root.containerInfo);
+        rootViewTransitionNameCanceled = true;
       }
       popViewTransitionCancelableScope(null);
       break;
@@ -3486,6 +3491,7 @@ function commitPassiveMountOnFiber(
   const prevEffectStart = pushComponentEffectStart();
   const prevEffectDuration = pushComponentEffectDuration();
   const prevEffectErrors = pushComponentEffectErrors();
+  const prevDeepEquality = pushDeepEquality();
 
   const isViewTransitionEligible = enableViewTransition
     ? includesOnlyViewTransitionEligibleLanes(committedLanes)
@@ -3530,6 +3536,7 @@ function commitPassiveMountOnFiber(
           ((finishedWork.actualStartTime: any): number),
           endTime,
           inHydratedSubtree,
+          committedLanes,
         );
       }
 
@@ -3574,6 +3581,7 @@ function commitPassiveMountOnFiber(
             ((finishedWork.actualStartTime: any): number),
             endTime,
             inHydratedSubtree,
+            committedLanes,
           );
         }
       }
@@ -3613,7 +3621,7 @@ function commitPassiveMountOnFiber(
       }
 
       if (isViewTransitionEligible) {
-        if (supportsMutation) {
+        if (supportsMutation && rootViewTransitionNameCanceled) {
           restoreRootViewTransitionName(finishedRoot.containerInfo);
         }
       }
@@ -4076,6 +4084,7 @@ function commitPassiveMountOnFiber(
   popComponentEffectStart(prevEffectStart);
   popComponentEffectDuration(prevEffectDuration);
   popComponentEffectErrors(prevEffectErrors);
+  popDeepEquality(prevDeepEquality);
 }
 
 function recursivelyTraverseReconnectPassiveEffects(
@@ -4137,6 +4146,8 @@ export function reconnectPassiveEffects(
   const prevEffectStart = pushComponentEffectStart();
   const prevEffectDuration = pushComponentEffectDuration();
   const prevEffectErrors = pushComponentEffectErrors();
+  const prevDeepEquality = pushDeepEquality();
+
   // If this component rendered in Profiling mode (DEV or in Profiler component) then log its
   // render time. We do this after the fact in the passive effect to avoid the overhead of this
   // getting in the way of the render characteristics and avoid the overhead of unwinding
@@ -4153,6 +4164,7 @@ export function reconnectPassiveEffects(
       ((finishedWork.actualStartTime: any): number),
       endTime,
       inHydratedSubtree,
+      committedLanes,
     );
   }
 
@@ -4337,6 +4349,7 @@ export function reconnectPassiveEffects(
   popComponentEffectStart(prevEffectStart);
   popComponentEffectDuration(prevEffectDuration);
   popComponentEffectErrors(prevEffectErrors);
+  popDeepEquality(prevDeepEquality);
 }
 
 function recursivelyTraverseAtomicPassiveEffects(
@@ -4386,6 +4399,8 @@ function commitAtomicPassiveEffects(
   committedTransitions: Array<Transition> | null,
   endTime: number, // Profiling-only. The start time of the next Fiber or root completion.
 ) {
+  const prevDeepEquality = pushDeepEquality();
+
   // If this component rendered in Profiling mode (DEV or in Profiler component) then log its
   // render time. A render can happen even if the subtree is offscreen.
   if (
@@ -4400,6 +4415,7 @@ function commitAtomicPassiveEffects(
       ((finishedWork.actualStartTime: any): number),
       endTime,
       inHydratedSubtree,
+      committedLanes,
     );
   }
 
@@ -4450,6 +4466,8 @@ function commitAtomicPassiveEffects(
       break;
     }
   }
+
+  popDeepEquality(prevDeepEquality);
 }
 
 export function commitPassiveUnmountEffects(finishedWork: Fiber): void {
