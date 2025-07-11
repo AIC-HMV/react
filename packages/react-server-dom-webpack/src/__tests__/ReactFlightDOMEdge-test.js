@@ -32,11 +32,12 @@ let webpackModuleLoading;
 let React;
 let ReactServer;
 let ReactDOMServer;
+let ReactDOMFizzStatic;
 let ReactServerDOMServer;
 let ReactServerDOMStaticServer;
 let ReactServerDOMClient;
 let use;
-let reactServerAct;
+let serverAct;
 let assertConsoleErrorDev;
 
 function normalizeCodeLocInfo(str) {
@@ -66,7 +67,7 @@ describe('ReactFlightDOMEdge', () => {
 
     jest.resetModules();
 
-    reactServerAct = require('internal-test-utils').serverAct;
+    serverAct = require('internal-test-utils').serverAct;
     assertConsoleErrorDev =
       require('internal-test-utils').assertConsoleErrorDev;
 
@@ -102,20 +103,10 @@ describe('ReactFlightDOMEdge', () => {
     );
     React = require('react');
     ReactDOMServer = require('react-dom/server.edge');
+    ReactDOMFizzStatic = require('react-dom/static.edge');
     ReactServerDOMClient = require('react-server-dom-webpack/client');
     use = React.use;
   });
-
-  async function serverAct(callback) {
-    let maybePromise;
-    await reactServerAct(() => {
-      maybePromise = callback();
-      if (maybePromise && typeof maybePromise.catch === 'function') {
-        maybePromise.catch(() => {});
-      }
-    });
-    return maybePromise;
-  }
 
   function passThrough(stream) {
     // Simulate more realistic network by splitting up and rejoining some chunks.
@@ -237,6 +228,30 @@ describe('ReactFlightDOMEdge', () => {
       }
       length += value.byteLength;
     }
+  }
+
+  async function createBufferedUnclosingStream(
+    prelude: ReadableStream<Uint8Array>,
+  ): ReadableStream<Uint8Array> {
+    const chunks: Array<Uint8Array> = [];
+    const reader = prelude.getReader();
+    while (true) {
+      const {done, value} = await reader.read();
+      if (done) {
+        break;
+      } else {
+        chunks.push(value);
+      }
+    }
+
+    let i = 0;
+    return new ReadableStream({
+      async pull(controller) {
+        if (i < chunks.length) {
+          controller.enqueue(chunks[i++]);
+        }
+      },
+    });
   }
 
   it('should allow an alternative module mapping to be used for SSR', async () => {
@@ -659,7 +674,7 @@ describe('ReactFlightDOMEdge', () => {
     const [stream2, drip] = dripStream(stream);
 
     // Allow some of the content through.
-    drip(5000);
+    drip(__DEV__ ? 7500 : 5000);
 
     const result = await ReactServerDOMClient.createFromReadableStream(
       stream2,
@@ -1201,7 +1216,6 @@ describe('ReactFlightDOMEdge', () => {
       const greetInfo = expect.objectContaining({
         name: 'Greeting',
         env: 'Server',
-        owner: null,
       });
       expect(lazyWrapper._debugInfo).toEqual([
         {time: 12},
@@ -1423,7 +1437,9 @@ describe('ReactFlightDOMEdge', () => {
       };
     });
 
-    controller.abort('boom');
+    await serverAct(() => {
+      controller.abort('boom');
+    });
     resolveGreeting();
     const {prelude} = await pendingResult;
 
@@ -1483,7 +1499,7 @@ describe('ReactFlightDOMEdge', () => {
     });
 
     controller.abort();
-    const {prelude} = await pendingResult;
+    const {prelude} = await serverAct(() => pendingResult);
 
     expect(errors).toEqual([]);
 
@@ -1788,5 +1804,115 @@ describe('ReactFlightDOMEdge', () => {
 
     expect(error).not.toBe(null);
     expect(error.message).toBe(expectedMessage);
+  });
+
+  // @gate enableHalt
+  it('does not include source locations in component stacks for halted components', async () => {
+    // We only support adding source locations for halted components in the Node.js builds.
+
+    async function Component() {
+      await new Promise(() => {});
+      return null;
+    }
+
+    function App() {
+      return ReactServer.createElement(
+        'html',
+        null,
+        ReactServer.createElement(
+          'body',
+          null,
+          ReactServer.createElement(
+            ReactServer.Suspense,
+            {fallback: 'Loading...'},
+            ReactServer.createElement(Component, null),
+          ),
+        ),
+      );
+    }
+
+    const serverAbortController = new AbortController();
+    const errors = [];
+    const prerenderResult = ReactServerDOMStaticServer.unstable_prerender(
+      ReactServer.createElement(App, null),
+      webpackMap,
+      {
+        signal: serverAbortController.signal,
+        onError(err) {
+          errors.push(err);
+        },
+      },
+    );
+
+    await new Promise(resolve => {
+      setImmediate(() => {
+        serverAbortController.abort();
+        resolve();
+      });
+    });
+
+    const {prelude} = await prerenderResult;
+
+    expect(errors).toEqual([]);
+
+    function ClientRoot({response}) {
+      return use(response);
+    }
+
+    const prerenderResponse = ReactServerDOMClient.createFromReadableStream(
+      await createBufferedUnclosingStream(prelude),
+      {
+        serverConsumerManifest: {
+          moduleMap: null,
+          moduleLoading: null,
+        },
+      },
+    );
+
+    let componentStack;
+    let ownerStack;
+
+    const clientAbortController = new AbortController();
+
+    const fizzPrerenderStreamResult = ReactDOMFizzStatic.prerender(
+      React.createElement(ClientRoot, {response: prerenderResponse}),
+      {
+        signal: clientAbortController.signal,
+        onError(error, errorInfo) {
+          componentStack = errorInfo.componentStack;
+          ownerStack = React.captureOwnerStack
+            ? React.captureOwnerStack()
+            : null;
+        },
+      },
+    );
+
+    await new Promise(resolve => {
+      setImmediate(() => {
+        clientAbortController.abort();
+        resolve();
+      });
+    });
+
+    const fizzPrerenderStream = await fizzPrerenderStreamResult;
+    const prerenderHTML = await readResult(fizzPrerenderStream.prelude);
+
+    expect(prerenderHTML).toContain('Loading...');
+
+    if (__DEV__) {
+      expect(normalizeCodeLocInfo(componentStack)).toBe(
+        '\n    in Component\n    in Suspense\n    in body\n    in html\n    in ClientRoot (at **)',
+      );
+    } else {
+      expect(normalizeCodeLocInfo(componentStack)).toBe(
+        '\n    in Suspense\n    in body\n    in html\n    in ClientRoot (at **)',
+      );
+    }
+
+    if (__DEV__) {
+      expect(normalizeCodeLocInfo(ownerStack)).toBe('\n    in App (at **)');
+    } else {
+      expect(ownerStack).toBeNull();
+    }
   });
 });

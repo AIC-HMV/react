@@ -1922,7 +1922,7 @@ describe('ReactDOMServerPartialHydration', () => {
       assertConsoleErrorDev([
         "Can't perform a React state update on a component that hasn't mounted yet. " +
           'This indicates that you have a side-effect in your render function that ' +
-          'asynchronously later calls tries to update the component. Move this work to useEffect instead.\n' +
+          'asynchronously tries to update the component. Move this work to useEffect instead.\n' +
           '    in App (at **)',
       ]);
 
@@ -2362,7 +2362,7 @@ describe('ReactDOMServerPartialHydration', () => {
 
     function App({showMore}) {
       return (
-        <SuspenseList revealOrder="forwards">
+        <SuspenseList revealOrder="forwards" tail="visible">
           {a}
           {b}
           {showMore ? (
@@ -3913,7 +3913,6 @@ describe('ReactDOMServerPartialHydration', () => {
     );
   });
 
-  // @gate favorSafetyOverHydrationPerf
   it("falls back to client rendering when there's a text mismatch (direct text child)", async () => {
     function DirectTextChild({text}) {
       return <div>{text}</div>;
@@ -3937,7 +3936,6 @@ describe('ReactDOMServerPartialHydration', () => {
     ]);
   });
 
-  // @gate favorSafetyOverHydrationPerf
   it("falls back to client rendering when there's a text mismatch (text child with siblings)", async () => {
     function Sibling() {
       return 'Sibling';
